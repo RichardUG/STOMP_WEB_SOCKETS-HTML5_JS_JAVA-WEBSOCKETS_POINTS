@@ -21,6 +21,7 @@ var app = (function () {
     var getMousePosition = function (evt) {
         canvas = document.getElementById("canvas");
         var rect = canvas.getBoundingClientRect();
+        stompClient.send("/topic/newpoint"+$('#identif').val(),{},JSON.stringify({x:evt.clientX-rect.left,y:evt.clientY-rect.top}));
         return {
             x: evt.clientX - rect.left,
             y: evt.clientY - rect.top
@@ -61,6 +62,8 @@ var app = (function () {
             addPointToCanvas(pt);
 
             //publicar el evento
+            stompClient.send("/topic/newpoint",{},JSON.stringify(pt));
+
         },
 
         disconnect: function () {
