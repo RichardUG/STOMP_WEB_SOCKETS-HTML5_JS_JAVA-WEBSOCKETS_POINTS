@@ -29,31 +29,38 @@ var app = (function () {
     };
 
 
-    var connectAndSubscribe = function () {
+     var connectAndSubscribe = function (callback) {
         console.info('Connecting to WS...');
         var socket = new SockJS('/stompendpoint');
         stompClient = Stomp.over(socket);
-        
-        //subscribe to /topic/TOPICXX when connections succeed
+
+        //subscribe to /topic/newpoint when connections succeed
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/TOPICXX', function (eventbody) {
-                
-                
+            stompClient.subscribe('/topic/newpoint', function (eventbody) {
+                var extract = JSON.parse(eventbody.body);
+                var pnt = new Point(extract.x,extract.y);
+                addPointToCanvas(pnt);
+                callback(
+                    JSON.stringify(pnt)
+                )
             });
         });
 
+
     };
-    
-    
+    var alerta = function(variable){
+        alert(variable);
+    }
 
     return {
+
 
         init: function () {
             var can = document.getElementById("canvas");
             
             //websocket connection
-            connectAndSubscribe();
+            connectAndSubscribe(alerta);
         },
 
         publishPoint: function(px,py){
@@ -72,7 +79,8 @@ var app = (function () {
             }
             setConnected(false);
             console.log("Disconnected");
-        }
+        },
+
     };
 
 })();
