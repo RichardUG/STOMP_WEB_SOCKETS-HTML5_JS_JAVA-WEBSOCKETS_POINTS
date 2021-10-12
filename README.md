@@ -29,10 +29,34 @@ Para esto, realice lo siguiente:
 	//creando un objeto literal
 	stompClient.send("/topic/newpoint", {}, JSON.stringify({x:10,y:10}));
 	```
+	
+	```js
+	var getMousePosition = function (evt) {
+        canvas = document.getElementById("canvas");
+        var rect = canvas.getBoundingClientRect();
+        stompClient.send("/topic/newpoint"+$('#identif').val(),{},JSON.stringify({x:evt.clientX-rect.left,y:evt.clientY-rect.top}));
+        return {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+        };
+    };
+	```
 
 	```javascript
 	//enviando un objeto creado a partir de una clase
 	stompClient.send("/topic/newpoint", {}, JSON.stringify(pt)); 
+	```
+	
+	```js
+	publishPoint: function(px,py){
+		var pt=new Point(px,py);
+		console.info("publishing point at "+pt);
+		addPointToCanvas(pt);
+
+		//publicar el evento
+		stompClient.send("/topic/newpoint",{},JSON.stringify(pt));
+
+	},
 	```
 	
 2. Dentro del módulo JavaScript modifique la función de conexión/suscripción al WebSocket, para que la aplicación se suscriba al tópico "/topic/newpoint" (en lugar del tópico /TOPICOXX). Asocie como 'callback' de este suscriptor una función que muestre en un mensaje de alerta (alert()) el evento recibido. Como se sabe que en el tópico indicado se publicarán sólo puntos, extraiga el contenido enviado con el evento (objeto JavaScript en versión de texto), conviértalo en objeto JSON, y extraiga de éste sus propiedades (coordenadas X y Y). Para extraer el contenido del evento use la propiedad 'body' del mismo, y para convertirlo en objeto, use JSON.parse. Por ejemplo:
@@ -40,6 +64,47 @@ Para esto, realice lo siguiente:
 	```javascript
 	var theObject=JSON.parse(message.body);
 	```
+	
+	Creamos la función que desplegara el mensaje alert
+	```js
+    var alerta = function(variable){
+        alert(variable);
+    }
+	```
+	
+	Cambiamos el topic al que se va a dirigir y agregamos una variable de en entrada que sear el callback a la función de alerta
+	```js
+	 var connectAndSubscribe = function (callback) {
+        console.info('Connecting to WS...');
+        var socket = new SockJS('/stompendpoint');
+        stompClient = Stomp.over(socket);
+
+        //subscribe to /topic/newpoint when connections succeed
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            stompClient.subscribe('/topic/newpoint', function (eventbody) {
+                var extract = JSON.parse(eventbody.body);
+                var pnt = new Point(extract.x,extract.y);
+                addPointToCanvas(pnt);
+                callback(
+                    JSON.stringify(pnt)
+                )
+            });
+        });
+    };
+	```
+	
+	Al invocar la función de connectAndSubscribe ahora enviamos la función alerta como parametro para que le haga callback
+	```js
+	 init: function () {
+		var can = document.getElementById("canvas");
+
+		//websocket connection
+		connectAndSubscribe(alerta);
+	},
+	```
+	
+	
 3. Compile y ejecute su aplicación. Abra la aplicación en varias pestañas diferentes (para evitar problemas con el caché del navegador, use el modo 'incógnito' en cada prueba).
 4. Ingrese los datos, ejecute la acción del botón, y verifique que en todas la pestañas se haya lanzado la alerta con los datos ingresados.
 
