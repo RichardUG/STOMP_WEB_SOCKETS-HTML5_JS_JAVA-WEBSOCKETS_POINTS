@@ -140,6 +140,40 @@ Ajuste la aplicación anterior para que pueda manejar más de un dibujo a la vez
 	```bash
 	git commit -m "PARTE 3".
 	```
+	
+	Se crea la sicrpcion por id en el js
+	```js
+	connectAndSubscribeToOne: function (id) {
+            idSuscribirse = id;
+            console.info('Connecting to WS...');
+            var socket = new SockJS('/stompendpoint');
+            stompClient = Stomp.over(socket);
+
+            //subscribe to /topic/newpoint when connections succeed
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/newpoint.' + idSuscribirse, function (message) {
+                    var point=JSON.parse(message.body);
+                    console.log(point);
+                    addPointToCanvas(point);
+                    alert(JSON.stringify(point));
+
+                });
+            });
+	```
+	
+	Adicionamos el boton para suscribirse en el html
+	```html
+	<body>
+		X:<input id="x" type="number"/>
+		Y:<input id="y" type="number"/>        
+		<button onclick="app.publishPoint($('#x').val(),$('#y').val())">Send point</button>
+		<canvas id="canvas" width="800" height="600"></canvas>
+		<input id="id" type="number"/>        
+		<button onclick="app.connectAndSubscribeToOne($('#id').val())">Suscribirse</button>
+	    </body>
+	``` 
+	
 
 
 ## Parte IV.
